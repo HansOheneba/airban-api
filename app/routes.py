@@ -63,25 +63,16 @@ def create_door():
         # Get form fields
         import uuid
 
-        # Log all form fields and files received
+        # Log all form fields received
         print("[DEBUG] request.form:", dict(request.form))
-        print(
-            "[DEBUG] request.files:", {k: v.filename for k, v in request.files.items()}
-        )
 
         name = request.form.get("name")
         description = request.form.get("description")
         price = request.form.get("price")
-        main_image = request.files.get("image")
+        image_url = request.form.get("image_url")
 
-        if not name or not price or not description:
+        if not image_url or not name or not price or not description:
             return jsonify({"error": "Name, price, and description are required"}), 400
-
-        # Upload main image to ImgBB if provided
-        if main_image:
-            image_url = upload_to_imgbb(main_image)
-        else:
-            image_url = None  # or set a default image URL if you want
 
         # Generate UUID for door
         door_id = str(uuid.uuid4())
@@ -94,16 +85,22 @@ def create_door():
             (door_id, name, description, price, image_url),
         )
 
-        # Optional: Sub images
-        sub_images = request.files.getlist("sub_images")
-        if sub_images:
-            for img in sub_images:
-                img_url = upload_to_imgbb(img)
-                image_id = str(uuid.uuid4())
-                cursor.execute(
-                    "INSERT INTO door_images (id, door_id, image_url) VALUES (%s, %s, %s)",
-                    (image_id, door_id, img_url),
-                )
+        # Optional: Sub images as URLs (expects a JSON array of URLs in sub_images)
+        sub_images_raw = request.form.get("sub_images")
+        if sub_images_raw:
+            import json
+
+            try:
+                sub_images = json.loads(sub_images_raw)
+                if isinstance(sub_images, list):
+                    for img_url in sub_images:
+                        image_id = str(uuid.uuid4())
+                        cursor.execute(
+                            "INSERT INTO door_images (id, door_id, image_url) VALUES (%s, %s, %s)",
+                            (image_id, door_id, img_url),
+                        )
+            except json.JSONDecodeError:
+                return jsonify({"error": "Invalid JSON format for sub_images"}), 400
 
         # Required: Variants (JSON string)
         variants_raw = request.form.get("variants")
