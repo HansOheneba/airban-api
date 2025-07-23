@@ -70,9 +70,17 @@ def create_door():
         description = request.form.get("description")
         price = request.form.get("price")
         image_url = request.form.get("image")
+        category = request.form.get("category")
 
-        if not image_url or not name or not price or not description:
-            return jsonify({"error": "Name, price, image_url, and description are required"}), 400
+        if not image_url or not name or not price or not description or not category:
+            return (
+                jsonify(
+                    {
+                        "error": "Name, price, image_url, description, and category are required"
+                    }
+                ),
+                400,
+            )
 
         # Generate UUID for door
         door_id = str(uuid.uuid4())
@@ -81,8 +89,8 @@ def create_door():
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
-            "INSERT INTO doors (id, name, description, price, image_url) VALUES (%s, %s, %s, %s, %s)",
-            (door_id, name, description, price, image_url),
+            "INSERT INTO doors (id, name, description, price, image_url, category) VALUES (%s, %s, %s, %s, %s, %s)",
+            (door_id, name, description, price, image_url, category),
         )
 
         # Optional: Sub images as URLs (expects a JSON array of URLs in sub_images)
