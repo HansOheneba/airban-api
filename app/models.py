@@ -1,5 +1,5 @@
 # Table schemas for reference:
-# doors(id INT, name VARCHAR(100), description TEXT, price DECIMAL(10,2), image_url VARCHAR(255), created_at TIMESTAMP)
+# doors(id INT, name VARCHAR(100), description TEXT, price DECIMAL(10,2), image_url VARCHAR(255), category VARCHAR(50), created_at TIMESTAMP)
 # door_images(id INT, door_id INT, image_url VARCHAR(255))
 # door_variants(id INT, door_id INT, color VARCHAR(50), orientation ENUM('left','right'), stock INT)
 
