@@ -69,10 +69,10 @@ def create_door():
         name = request.form.get("name")
         description = request.form.get("description")
         price = request.form.get("price")
-        image_url = request.form.get("image_url")
+        image_url = request.form.get("image")
 
         if not image_url or not name or not price or not description:
-            return jsonify({"error": "Name, price, and description are required"}), 400
+            return jsonify({"error": "Name, price, image_url, and description are required"}), 400
 
         # Generate UUID for door
         door_id = str(uuid.uuid4())
