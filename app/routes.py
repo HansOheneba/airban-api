@@ -63,12 +63,18 @@ def create_door():
         # Get form fields
         import uuid
 
+        # Log all form fields and files received
+        print("[DEBUG] request.form:", dict(request.form))
+        print(
+            "[DEBUG] request.files:", {k: v.filename for k, v in request.files.items()}
+        )
+
         name = request.form.get("name")
         description = request.form.get("description")
         price = request.form.get("price")
         main_image = request.files.get("image")
 
-        if not name or not main_image:
+        if not name or not main_image or not price or not description:
             return jsonify({"error": "Name, price, and main image are required"}), 400
 
         # Upload main image to ImgBB
