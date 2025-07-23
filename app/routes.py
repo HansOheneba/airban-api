@@ -74,11 +74,14 @@ def create_door():
         price = request.form.get("price")
         main_image = request.files.get("image")
 
-        if not name or not main_image or not price or not description:
-            return jsonify({"error": "Name, price, and main image are required"}), 400
+        if not name or not price or not description:
+            return jsonify({"error": "Name, price, and description are required"}), 400
 
-        # Upload main image to ImgBB
-        image_url = upload_to_imgbb(main_image)
+        # Upload main image to ImgBB if provided
+        if main_image:
+            image_url = upload_to_imgbb(main_image)
+        else:
+            image_url = None  # or set a default image URL if you want
 
         # Generate UUID for door
         door_id = str(uuid.uuid4())
