@@ -16,15 +16,10 @@ def get_all_doors():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    cursor.execute("SELECT * FROM doors ORDER BY created_at DESC")
+    cursor.execute(
+        "SELECT name, price, type, image_url FROM doors ORDER BY created_at DESC"
+    )
     doors = cursor.fetchall()
-
-    for door in doors:
-        # Get sub images
-        cursor.execute(
-            "SELECT image_url FROM door_images WHERE door_id = %s", (door["id"],)
-        )
-        door["sub_images"] = [img["image_url"] for img in cursor.fetchall()]
 
     cursor.close()
     conn.close()
