@@ -17,7 +17,7 @@ def get_all_doors():
     cursor = conn.cursor(dictionary=True)
 
     cursor.execute(
-        "SELECT name, price, type, image_url FROM doors ORDER BY created_at DESC"
+        "SELECT id, name, price, type, image_url FROM doors ORDER BY created_at DESC"
     )
     doors = cursor.fetchall()
 
