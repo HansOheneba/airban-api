@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app
 from .models import get_door_by_id, get_all_doors, delete_door, update_door, get_db_cursor, get_db_connection 
 import uuid
 
@@ -114,13 +114,19 @@ def create_door():
 @main.route("/doors/<door_id>", methods=["DELETE"])
 def delete_door_route(door_id):
     try:
+        # First check if door exists
         door = get_door_by_id(door_id)
         if not door:
-            return jsonify({"error": "Door not found or already deleted"}), 404
+            return jsonify({"error": "Door not found"}), 404
 
+        # Perform soft delete
         if delete_door(door_id):
             return jsonify({"message": "Door deleted successfully"}), 200
-        return jsonify({"error": "No door was deleted"}), 400
+        return jsonify({"error": "Delete operation failed"}), 400
+
+    except Exception as e:
+        current_app.logger.error(f"Error deleting door: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
