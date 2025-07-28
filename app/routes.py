@@ -120,7 +120,7 @@ def delete_door(door_id):
         return jsonify({"error": str(e)}), 500
 
 
-@main.route("/doors/<door_id>", methods=["PUT"])
+@main.route("/doors/<door_id>", methods=["PATCH"])
 def update_door_route(door_id):
     try:
         # Check if door exists
@@ -128,7 +128,6 @@ def update_door_route(door_id):
         if not door:
             return jsonify({"error": "Door not found"}), 404
 
-        # Get update data from request
         data = request.get_json()
         if not data:
             return jsonify({"error": "No data provided for update"}), 400
@@ -146,13 +145,12 @@ def update_door_route(door_id):
 
         # Perform the update
         if update_door(door_id, data):
-            updated_door = get_door_by_id(door_id)  # Fetch the updated door
+            updated_door = get_door_by_id(door_id)
             return (
                 jsonify({"message": "Door updated successfully", "door": updated_door}),
                 200,
             )
-        else:
-            return jsonify({"error": "No fields were updated"}), 400
+        return jsonify({"error": "No changes were made"}), 400
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500

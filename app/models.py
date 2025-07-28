@@ -66,46 +66,45 @@ def delete_door(door_id):
 def update_door(door_id, update_data):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
-
+    
     try:
-        # Build the update query dynamically based on provided fields
+        # Build the update query for door fields
         set_clauses = []
         values = []
-
-        # List of allowed fields to update
-        allowed_fields = ["name", "description", "price", "type", "stock", "image_url"]
-
+        allowed_fields = ['name', 'description', 'price', 'type', 'stock', 'image_url']
+        
         for field in allowed_fields:
             if field in update_data:
                 set_clauses.append(f"{field} = %s")
                 values.append(update_data[field])
-
-        if not set_clauses:
-            return False  # Nothing to update
-
-        # Add door_id to values for WHERE clause
-        values.append(door_id)
-
-        # Execute the update
-        query = f"UPDATE doors SET {', '.join(set_clauses)} WHERE id = %s AND is_deleted = 0"
-        cursor.execute(query, values)
-
-        # Handle sub images if provided
-        if "sub_images" in update_data:
-            # First delete existing sub images
-            cursor.execute("DELETE FROM door_images WHERE door_id = %s", (door_id,))
-
-            # Then insert new ones
-            for image_url in update_data["sub_images"]:
-                image_id = str(uuid.uuid4())
-                cursor.execute(
-                    "INSERT INTO door_images (id, door_id, image_url) VALUES (%s, %s, %s)",
-                    (image_id, door_id, image_url),
-                )
-
+        
+        # Update door fields if any
+        if set_clauses:
+            query = f"UPDATE doors SET {', '.join(set_clauses)} WHERE id = %s AND is_deleted = 0"
+            cursor.execute(query, values + [door_id])
+        
+        # Handle sub images operations
+        if 'sub_images_operations' in update_data:
+            operations = update_data['sub_images_operations']
+            
+            # Delete specified images
+            if 'delete' in operations:
+                for image_url in operations['delete']:
+                    cursor.execute(
+                        "DELETE FROM door_images WHERE door_id = %s AND image_url = %s",
+                        (door_id, image_url))
+            
+            # Add new images
+            if 'add' in operations:
+                for image_url in operations['add']:
+                    image_id = str(uuid.uuid4())
+                    cursor.execute(
+                        "INSERT INTO door_images (id, door_id, image_url) VALUES (%s, %s, %s)",
+                        (image_id, door_id, image_url))
+        
         conn.commit()
-        return cursor.rowcount > 0
-
+        return True
+        
     except Exception as e:
         conn.rollback()
         raise e
