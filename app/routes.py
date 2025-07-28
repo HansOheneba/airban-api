@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request, current_app
-from .models import get_db_connection, get_door_by_id, get_all_doors
+from .models import get_db_connection, get_door_by_id, get_all_doors, delete_door, update_door
 import uuid
 import json
 
@@ -97,6 +97,62 @@ def create_door():
             jsonify({"message": "Door created successfully", "door_id": door_id}),
             201,
         )
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@main.route("/doors/<door_id>", methods=["DELETE"])
+def delete_door(door_id):
+    try:
+        # First check if door exists and isn't already deleted
+        door = get_door_by_id(door_id)
+        if not door:
+            return jsonify({"error": "Door not found or already deleted"}), 404
+
+        # Perform soft delete
+        if delete_door(door_id):
+            return jsonify({"message": "Door deleted successfully"}), 200
+        else:
+            return jsonify({"error": "No door was deleted"}), 400
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@main.route("/doors/<door_id>", methods=["PUT"])
+def update_door_route(door_id):
+    try:
+        # Check if door exists
+        door = get_door_by_id(door_id)
+        if not door:
+            return jsonify({"error": "Door not found"}), 404
+
+        # Get update data from request
+        data = request.get_json()
+        if not data:
+            return jsonify({"error": "No data provided for update"}), 400
+
+        # Validate door type if provided
+        if "type" in data:
+            valid_types = ["Single", "Single Wide", "One and Half", "Double"]
+            if data["type"] not in valid_types:
+                return (
+                    jsonify(
+                        {"error": f"Invalid door type. Must be one of: {valid_types}"}
+                    ),
+                    400,
+                )
+
+        # Perform the update
+        if update_door(door_id, data):
+            updated_door = get_door_by_id(door_id)  # Fetch the updated door
+            return (
+                jsonify({"message": "Door updated successfully", "door": updated_door}),
+                200,
+            )
+        else:
+            return jsonify({"error": "No fields were updated"}), 400
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
