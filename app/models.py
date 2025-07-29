@@ -115,3 +115,108 @@ def update_door(door_id, update_data):
 
             conn.commit()
             return True
+
+
+def create_order(order_data):
+    with get_db_connection() as conn:
+        with conn.cursor(dictionary=True) as cursor:
+            # First validate all door items and calculate total price
+            total_price = 0
+            order_items = []
+
+            for item in order_data["items"]:
+                cursor.execute(
+                    "SELECT price FROM doors WHERE id = %s AND is_deleted = 0",
+                    (item["door_id"],),
+                )
+                door = cursor.fetchone()
+
+                if not door:
+                    raise ValueError(
+                        f"Door with ID {item['door_id']} not found or deleted"
+                    )
+
+                unit_price = door["price"]
+                total_price += unit_price * item["quantity"]
+                order_items.append(
+                    {
+                        "door_id": item["door_id"],
+                        "quantity": item["quantity"],
+                        "unit_price": unit_price,
+                    }
+                )
+
+            # Create the order
+            order_id = str(uuid.uuid4())
+            cursor.execute(
+                """INSERT INTO orders 
+                (id, customer_name, phone_number, email, location, notes, total_price) 
+                VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+                (
+                    order_id,
+                    order_data["name"],
+                    order_data["phone"],
+                    order_data["email"], 
+                    order_data["address"],
+                    order_data.get("notes", ""),
+                    total_price,
+                ),
+            )
+
+            # Create order items
+            for item in order_items:
+                cursor.execute(
+                    """INSERT INTO order_items 
+                    (id, order_id, door_id, quantity, unit_price) 
+                    VALUES (%s, %s, %s, %s, %s)""",
+                    (
+                        str(uuid.uuid4()),
+                        order_id,
+                        item["door_id"],
+                        item["quantity"],
+                        item["unit_price"],
+                    ),
+                )
+
+            conn.commit()
+            return order_id
+
+
+# Update get_order_by_id and get_all_orders to include email
+def get_order_by_id(order_id):
+    with get_db_cursor() as cursor:
+        cursor.execute(
+            """SELECT id, customer_name, phone_number, email, location, notes, 
+                  total_price, created_at, is_confirmed 
+               FROM orders 
+               WHERE id = %s AND is_deleted = 0""",
+            (order_id,),
+        )
+        order = cursor.fetchone()
+
+        if not order:
+            return None
+
+        # Get order items
+        cursor.execute(
+            """SELECT oi.door_id, oi.quantity, oi.unit_price, d.name as door_name
+               FROM order_items oi
+               JOIN doors d ON oi.door_id = d.id
+               WHERE oi.order_id = %s""",
+            (order_id,),
+        )
+        order["items"] = cursor.fetchall()
+
+        return order
+
+
+def get_all_orders():
+    with get_db_cursor() as cursor:
+        cursor.execute(
+            """SELECT id, customer_name, phone_number, email, location, 
+                  total_price, created_at, is_confirmed 
+               FROM orders 
+               WHERE is_deleted = 0 
+               ORDER BY created_at DESC"""
+        )
+        return cursor.fetchall()

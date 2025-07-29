@@ -1,5 +1,15 @@
 from flask import Blueprint, jsonify, request, current_app
-from .models import get_door_by_id, get_all_doors, delete_door, update_door, get_db_cursor, get_db_connection 
+from .models import (
+    get_door_by_id,
+    get_all_doors,
+    delete_door,
+    update_door,
+    get_db_cursor,
+    get_db_connection,
+    create_order,
+    get_order_by_id,
+    get_all_orders,
+)
 import uuid
 
 main = Blueprint("main", __name__)
@@ -8,7 +18,7 @@ main = Blueprint("main", __name__)
 @main.route("/test-db")
 def test_db():
     try:
-        with get_db_cursor() as cursor: 
+        with get_db_cursor() as cursor:
             cursor.execute("SELECT DATABASE()")
             db_name = cursor.fetchone()[0]
             return jsonify({"connected_to": db_name})
@@ -161,5 +171,73 @@ def update_door_route(door_id):
             )
         return jsonify({"error": "No changes were made"}), 400
 
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@main.route("/orders", methods=["POST"])
+def create_order_route():
+    try:
+        data = request.get_json()
+
+        # Validate required fields (email is now required)
+        if not all(
+            [
+                data.get("name"),
+                data.get("email"),
+                data.get("phone"),
+                data.get("address"),
+                data.get("items"),
+            ]
+        ):
+            return (
+                jsonify(
+                    {
+                        "error": "Missing required fields (name, email, phone, address, items)"
+                    }
+                ),
+                400,
+            )
+
+        if not isinstance(data["items"], list) or len(data["items"]) == 0:
+            return jsonify({"error": "Items must be a non-empty array"}), 400
+
+        for item in data["items"]:
+            if not all(k in item for k in ["door_id", "quantity"]):
+                return (
+                    jsonify({"error": "Each item must have door_id and quantity"}),
+                    400,
+                )
+            if item["quantity"] <= 0:
+                return jsonify({"error": "Quantity must be positive"}), 400
+
+        # Create the order
+        order_id = create_order(data)
+        order = get_order_by_id(order_id)
+
+        return jsonify({"message": "Order created successfully", "order": order}), 201
+
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@main.route("/orders", methods=["GET"])
+def get_orders():
+    try:
+        orders = get_all_orders()
+        return jsonify(orders)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@main.route("/orders/<order_id>", methods=["GET"])
+def get_order(order_id):
+    try:
+        order = get_order_by_id(order_id)
+        if not order:
+            return jsonify({"error": "Order not found"}), 404
+        return jsonify(order), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
