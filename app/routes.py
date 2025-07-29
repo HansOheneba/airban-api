@@ -210,6 +210,9 @@ def create_order_route():
                 )
             if item["quantity"] <= 0:
                 return jsonify({"error": "Quantity must be positive"}), 400
+            
+            if "orientation" in item and item["orientation"] not in ["left", "right"]:
+                return jsonify({"error": "Orientation must be either 'left' or 'right'"}), 400
 
         # Create the order
         order_id = create_order(data)

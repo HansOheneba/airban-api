@@ -143,6 +143,7 @@ def create_order(order_data):
                         "door_id": item["door_id"],
                         "quantity": item["quantity"],
                         "unit_price": unit_price,
+                        "orientation": item.get("orientation", "left")
                     }
                 )
 
@@ -167,14 +168,15 @@ def create_order(order_data):
             for item in order_items:
                 cursor.execute(
                     """INSERT INTO order_items 
-                    (id, order_id, door_id, quantity, unit_price) 
-                    VALUES (%s, %s, %s, %s, %s)""",
+                    (id, order_id, door_id, quantity, unit_price, orientation) 
+                    VALUES (%s, %s, %s, %s, %s, %s)""",
                     (
                         str(uuid.uuid4()),
                         order_id,
                         item["door_id"],
                         item["quantity"],
                         item["unit_price"],
+                        item["orientation"],
                     ),
                 )
 
@@ -199,7 +201,7 @@ def get_order_by_id(order_id):
 
         # Get order items
         cursor.execute(
-            """SELECT oi.door_id, oi.quantity, oi.unit_price, d.name as door_name
+            """SELECT oi.door_id, oi.quantity, oi.unit_price, oi.orientation, d.name as door_name
                FROM order_items oi
                JOIN doors d ON oi.door_id = d.id
                WHERE oi.order_id = %s""",
