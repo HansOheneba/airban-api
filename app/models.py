@@ -143,7 +143,7 @@ def create_order(order_data):
                         "door_id": item["door_id"],
                         "quantity": item["quantity"],
                         "unit_price": unit_price,
-                        "orientation": item.get("orientation", "left")
+                        "orientation": item.get("orientation", "left"),
                     }
                 )
 
@@ -157,7 +157,7 @@ def create_order(order_data):
                     order_id,
                     order_data["name"],
                     order_data["phone"],
-                    order_data["email"], 
+                    order_data["email"],
                     order_data["address"],
                     order_data.get("notes", ""),
                     total_price,
@@ -222,3 +222,27 @@ def get_all_orders():
                ORDER BY created_at DESC"""
         )
         return cursor.fetchall()
+
+
+# Mark an order as completed
+def mark_order_as_completed(order_id):
+    with get_db_connection() as conn:
+        with conn.cursor(dictionary=True) as cursor:
+            cursor.execute(
+                "UPDATE orders SET is_confirmed = 1 WHERE id = %s AND is_deleted = 0",
+                (order_id,),
+            )
+            conn.commit()
+            return cursor.rowcount > 0
+
+
+# Delete (soft-delete) an order
+def delete_order(order_id):
+    with get_db_connection() as conn:
+        with conn.cursor(dictionary=True) as cursor:
+            cursor.execute(
+                "UPDATE orders SET is_deleted = 1 WHERE id = %s AND is_deleted = 0",
+                (order_id,),
+            )
+            conn.commit()
+            return cursor.rowcount > 0

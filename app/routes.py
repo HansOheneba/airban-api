@@ -9,6 +9,8 @@ from .models import (
     create_order,
     get_order_by_id,
     get_all_orders,
+    mark_order_as_completed,
+    delete_order,
 )
 import uuid
 
@@ -210,9 +212,12 @@ def create_order_route():
                 )
             if item["quantity"] <= 0:
                 return jsonify({"error": "Quantity must be positive"}), 400
-            
+
             if "orientation" in item and item["orientation"] not in ["left", "right"]:
-                return jsonify({"error": "Orientation must be either 'left' or 'right'"}), 400
+                return (
+                    jsonify({"error": "Orientation must be either 'left' or 'right'"}),
+                    400,
+                )
 
         # Create the order
         order_id = create_order(data)
@@ -242,5 +247,32 @@ def get_order(order_id):
         if not order:
             return jsonify({"error": "Order not found"}), 404
         return jsonify(order), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# Route to mark an order as completed
+@main.route("/orders/complete/<order_id>", methods=["POST"])
+def complete_order(order_id):
+    try:
+        success = mark_order_as_completed(order_id)
+        if not success:
+            return (
+                jsonify({"error": "Order not found or already completed/deleted"}),
+                404,
+            )
+        return jsonify({"message": "Order marked as completed."}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# Route to delete (soft-delete) an order
+@main.route("/orders/<order_id>", methods=["DELETE"])
+def delete_order_route(order_id):
+    try:
+        success = delete_order(order_id)
+        if not success:
+            return jsonify({"error": "Order not found or already deleted"}), 404
+        return jsonify({"message": "Order deleted successfully."}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
