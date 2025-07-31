@@ -23,12 +23,15 @@ def send_order_confirmation(order_data):
         # Format order items for email
         items_html = ""
         for item in order_data["items"]:
+            # Ensure unit_price is float for calculation
+            unit_price = float(item["unit_price"])
             items_html += f"""
             <tr>
                 <td>{item['door_name']}</td>
+                <td>{item['door_type']}</td>
                 <td>{item['quantity']}</td>
-                <td>GHS {item['unit_price']:.2f}</td>
-                <td>GHS {item['quantity'] * item['unit_price']:.2f}</td>
+                <td>GHS {unit_price:.2f}</td>
+                <td>GHS {item['quantity'] * unit_price:.2f}</td>
             </tr>
             """
 
@@ -46,6 +49,7 @@ def send_order_confirmation(order_data):
                         <thead>
                             <tr>
                                 <th>Door</th>
+                                <th>Type</th>
                                 <th>Quantity</th>
                                 <th>Unit Price</th>
                                 <th>Total</th>
@@ -56,8 +60,8 @@ def send_order_confirmation(order_data):
                         </tbody>
                         <tfoot>
                             <tr>
-                                <td colspan="3" align="right"><strong>Total:</strong></td>
-                                <td><strong>GHS {order_data['total_price']:.2f}</strong></td>
+                                <td colspan="4" align="right"><strong>Total:</strong></td>
+                                <td><strong>GHS {float(order_data['total_price']):.2f}</strong></td>
                             </tr>
                         </tfoot>
                     </table>
@@ -83,13 +87,14 @@ def send_order_confirmation(order_data):
                     <p>Phone: {order_data['phone_number']}</p>
                     <p>Address: {order_data['location']}</p>
                     <p>Notes: {order_data.get('notes', 'None')}</p>
-                    <p>Order Total: GHS {order_data['total_price']:.2f}</p>
+                    <p>Order Total: GHS {float(order_data['total_price']):.2f}</p>
                     
                     <h3>Order Items:</h3>
                     <table border="1" cellpadding="5" cellspacing="0">
                         <thead>
                             <tr>
                                 <th>Door</th>
+                                <th>Type</th>
                                 <th>Quantity</th>
                                 <th>Unit Price</th>
                                 <th>Total</th>
