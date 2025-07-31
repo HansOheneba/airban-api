@@ -12,6 +12,12 @@ def send_order_confirmation(order_data):
         # Set the API key
         resend.api_key = current_app.config["RESEND_API_KEY"]
 
+        # Get sender and admin email from config (from .env)
+        verified_domain = current_app.config.get(
+            "VERIFIED_DOMAIN", "orders@hansoheneba.com"
+        )
+        admin_email = current_app.config.get("ADMIN_EMAIL", "hansopoku360@gmail.com")
+
         # Email to customer
         customer_email = order_data["email"]
         customer_name = order_data["customer_name"]
@@ -30,7 +36,7 @@ def send_order_confirmation(order_data):
 
         # Send to customer
         customer_params = {
-            "from": "Airban Doors <orders@hansoheneba.com>",
+            "from": f"Airban Doors <{verified_domain}>",
             "to": [customer_email],
             "subject": "Your Airban Doors Order Confirmation",
             "html": f"""
@@ -67,8 +73,8 @@ def send_order_confirmation(order_data):
 
         # Send to admin (you)
         admin_params = {
-            "from": "Airban Orders <orders@hansoheneba.com>",
-            "to": ["hansopoku360@gmail.com"],  # Change to your admin email
+            "from": f"Airban Orders <{verified_domain}>",
+            "to": [admin_email],
             "subject": f"New Order Received from {customer_name}",
             "html": f"""
             <html>

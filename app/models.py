@@ -126,7 +126,7 @@ def create_order(order_data):
 
             for item in order_data["items"]:
                 cursor.execute(
-                    "SELECT price FROM doors WHERE id = %s AND is_deleted = 0",
+                    "SELECT price, type FROM doors WHERE id = %s AND is_deleted = 0",
                     (item["door_id"],),
                 )
                 door = cursor.fetchone()
@@ -137,6 +137,7 @@ def create_order(order_data):
                     )
 
                 unit_price = door["price"]
+                door_type = door["type"]
                 total_price += unit_price * item["quantity"]
                 order_items.append(
                     {
@@ -144,6 +145,7 @@ def create_order(order_data):
                         "quantity": item["quantity"],
                         "unit_price": unit_price,
                         "orientation": item.get("orientation", "left"),
+                        "door_type": door_type,
                     }
                 )
 
@@ -168,8 +170,8 @@ def create_order(order_data):
             for item in order_items:
                 cursor.execute(
                     """INSERT INTO order_items 
-                    (id, order_id, door_id, quantity, unit_price, orientation) 
-                    VALUES (%s, %s, %s, %s, %s, %s)""",
+                    (id, order_id, door_id, quantity, unit_price, orientation, door_type) 
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)""",
                     (
                         str(uuid.uuid4()),
                         order_id,
@@ -177,6 +179,7 @@ def create_order(order_data):
                         item["quantity"],
                         item["unit_price"],
                         item["orientation"],
+                        item["door_type"],
                     ),
                 )
 
@@ -201,7 +204,7 @@ def get_order_by_id(order_id):
 
         # Get order items
         cursor.execute(
-            """SELECT oi.door_id, oi.quantity, oi.unit_price, oi.orientation, d.name as door_name
+            """SELECT oi.door_id, oi.door_type, oi.quantity, oi.unit_price, oi.orientation, d.name as door_name
                FROM order_items oi
                JOIN doors d ON oi.door_id = d.id
                WHERE oi.order_id = %s""",
