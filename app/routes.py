@@ -225,8 +225,7 @@ def create_order_route():
         # Create the order
         order_id = create_order(data)
         order = get_order_by_id(order_id)
-        
-       
+
         send_order_confirmation(order)
 
         return jsonify({"message": "Order created successfully", "order": order}), 201
@@ -283,15 +282,23 @@ def delete_order_route(order_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+    verified_domain = current_app.config["VERIFIED_DOMAIN"]
+    admin_email = current_app.config["ADMIN_EMAIL"]
+    print(f"Using verified domain: {verified_domain}, admin email: {admin_email}")
+
 
 @main.route("/test-email")
 def test_email():
     try:
         resend.api_key = current_app.config["RESEND_API_KEY"]
 
+        verified_domain = current_app.config["RESEND_VERIFIED_DOMAIN"]
+        admin_email = current_app.config["ADMIN_EMAIL"]
+        print(f"Using verified domain: {verified_domain}, admin email: {admin_email}")
+
         params = {
-            "from": "Airban Doors <orders@hansoheneba.com>",
-            "to": ["Hans Oheneba <hansopoku360@gmail.com>"],
+            "from": f"Airban Doors <{verified_domain}>",
+            "to": [f"Hans Oheneba <{admin_email}>"],
             "subject": "Test Email from Airban Doors",
             "html": "<strong>This is a test email from Airban Doors!</strong>",
         }

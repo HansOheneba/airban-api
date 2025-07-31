@@ -13,10 +13,8 @@ def send_order_confirmation(order_data):
         resend.api_key = current_app.config["RESEND_API_KEY"]
 
         # Get sender and admin email from config (from .env)
-        verified_domain = current_app.config.get(
-            "VERIFIED_DOMAIN", "orders@hansoheneba.com"
-        )
-        admin_email = current_app.config.get("ADMIN_EMAIL", "hansopoku360@gmail.com")
+        verified_domain = current_app.config["RESEND_VERIFIED_DOMAIN"]
+        admin_email = current_app.config["ADMIN_EMAIL"]
 
         # Email to customer
         customer_email = order_data["email"]
