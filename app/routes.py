@@ -12,7 +12,11 @@ from .models import (
     mark_order_as_completed,
     delete_order,
 )
+
+from .email import send_order_confirmation
 import uuid
+
+import resend
 
 main = Blueprint("main", __name__)
 
@@ -182,7 +186,6 @@ def create_order_route():
     try:
         data = request.get_json()
 
-        # Validate required fields (email is now required)
         if not all(
             [
                 data.get("name"),
@@ -222,6 +225,9 @@ def create_order_route():
         # Create the order
         order_id = create_order(data)
         order = get_order_by_id(order_id)
+        
+       
+        send_order_confirmation(order)
 
         return jsonify({"message": "Order created successfully", "order": order}), 201
 
@@ -274,5 +280,23 @@ def delete_order_route(order_id):
         if not success:
             return jsonify({"error": "Order not found or already deleted"}), 404
         return jsonify({"message": "Order deleted successfully."}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@main.route("/test-email")
+def test_email():
+    try:
+        resend.api_key = current_app.config["RESEND_API_KEY"]
+
+        params = {
+            "from": "Airban Doors <orders@hansoheneba.com>",
+            "to": ["Hans Oheneba <hansopoku360@gmail.com>"],
+            "subject": "Test Email from Airban Doors",
+            "html": "<strong>This is a test email from Airban Doors!</strong>",
+        }
+
+        response = resend.Emails.send(params)
+        return jsonify({"status": "success", "response": response})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
