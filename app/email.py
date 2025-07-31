@@ -83,7 +83,7 @@ def send_order_confirmation(order_data):
                     <p>Phone: {order_data['phone_number']}</p>
                     <p>Address: {order_data['location']}</p>
                     <p>Notes: {order_data.get('notes', 'None')}</p>
-                    <p>Order Total: ${order_data['total_price']:.2f}</p>
+                    <p>Order Total: GHS {order_data['total_price']:.2f}</p>
                     
                     <h3>Order Items:</h3>
                     <table border="1" cellpadding="5" cellspacing="0">
