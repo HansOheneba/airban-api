@@ -11,6 +11,12 @@ from .models import (
     get_all_orders,
     mark_order_as_completed,
     delete_order,
+    create_property_enquiry,
+    get_all_property_enquiries,
+    get_property_enquiry_by_id,
+    mark_enquiry_as_resolved,
+    mark_enquiry_as_unresolved,
+    delete_property_enquiry,
 )
 
 from .email import send_order_confirmation
@@ -305,5 +311,91 @@ def test_email():
 
         response = resend.Emails.send(params)
         return jsonify({"status": "success", "response": response})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# Property Enquiry Routes
+@main.route("/property", methods=["POST"])
+def create_property_enquiry_route():
+    try:
+        data = request.get_json()
+
+        # Validate required fields
+        required_fields = [
+            "first_name",
+            "last_name",
+            "email",
+            "phone",
+            "selected_property",
+        ]
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({"error": f"Missing required field: {field}"}), 400
+
+        enquiry_id = create_property_enquiry(data)
+        return (
+            jsonify(
+                {
+                    "message": "Property enquiry submitted successfully",
+                    "enquiry_id": enquiry_id,
+                }
+            ),
+            201,
+        )
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@main.route("/property", methods=["GET"])
+def get_property_enquiries():
+    try:
+        enquiries = get_all_property_enquiries()
+        return jsonify(enquiries), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@main.route("/property/<enquiry_id>", methods=["GET"])
+def get_single_property_enquiry(enquiry_id):
+    try:
+        enquiry = get_property_enquiry_by_id(enquiry_id)
+        if not enquiry:
+            return jsonify({"error": "Property enquiry not found"}), 404
+        return jsonify(enquiry), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@main.route("/property/<enquiry_id>/resolve", methods=["POST"])
+def resolve_property_enquiry(enquiry_id):
+    try:
+        success = mark_enquiry_as_resolved(enquiry_id)
+        if not success:
+            return jsonify({"error": "Property enquiry not found"}), 404
+        return jsonify({"message": "Property enquiry marked as resolved"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@main.route("/property/<enquiry_id>/unresolve", methods=["POST"])
+def unresolve_property_enquiry(enquiry_id):
+    try:
+        success = mark_enquiry_as_unresolved(enquiry_id)
+        if not success:
+            return jsonify({"error": "Property enquiry not found"}), 404
+        return jsonify({"message": "Property enquiry marked as unresolved"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@main.route("/property/<enquiry_id>", methods=["DELETE"])
+def delete_property_enquiry_route(enquiry_id):
+    try:
+        success = delete_property_enquiry(enquiry_id)
+        if not success:
+            return jsonify({"error": "Property enquiry not found"}), 404
+        return jsonify({"message": "Property enquiry deleted successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
