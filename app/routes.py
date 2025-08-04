@@ -17,6 +17,12 @@ from .models import (
     mark_enquiry_as_resolved,
     mark_enquiry_as_unresolved,
     delete_property_enquiry,
+    create_contact_enquiry,
+    get_all_contact_enquiries,
+    get_contact_enquiry_by_id,
+    mark_contact_enquiry_as_resolved,
+    mark_contact_enquiry_as_unresolved,
+    delete_contact_enquiry,
 )
 
 from .email import send_order_confirmation
@@ -397,5 +403,91 @@ def delete_property_enquiry_route(enquiry_id):
         if not success:
             return jsonify({"error": "Property enquiry not found"}), 404
         return jsonify({"message": "Property enquiry deleted successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@main.route("/contact", methods=["POST"])
+def create_contact_enquiry_route():
+    try:
+        data = request.get_json()
+
+        # Validate required fields
+        required_fields = ["first_name", "last_name", "email", "phone", "enquiry_type"]
+        if not all(field in data for field in required_fields):
+            return (
+                jsonify(
+                    {
+                        "error": "Missing required fields (first_name, last_name, email, phone, enquiry_type)"
+                    }
+                ),
+                400,
+            )
+
+
+        enquiry_id = create_contact_enquiry(data)
+        return (
+            jsonify(
+                {
+                    "message": "Contact enquiry submitted successfully",
+                    "enquiry_id": enquiry_id,
+                }
+            ),
+            201,
+        )
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@main.route("/contact", methods=["GET"])
+def get_contact_enquiries():
+    try:
+        enquiries = get_all_contact_enquiries()
+        return jsonify(enquiries), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@main.route("/contact/<enquiry_id>", methods=["GET"])
+def get_contact_enquiry(enquiry_id):
+    try:
+        enquiry = get_contact_enquiry_by_id(enquiry_id)
+        if not enquiry:
+            return jsonify({"error": "Contact enquiry not found"}), 404
+        return jsonify(enquiry), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@main.route("/contact/<enquiry_id>/resolve", methods=["POST"])
+def resolve_contact_enquiry(enquiry_id):
+    try:
+        success = mark_contact_enquiry_as_resolved(enquiry_id)
+        if not success:
+            return jsonify({"error": "Contact enquiry not found"}), 404
+        return jsonify({"message": "Contact enquiry marked as resolved"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@main.route("/contact/<enquiry_id>/unresolve", methods=["POST"])
+def unresolve_contact_enquiry(enquiry_id):
+    try:
+        success = mark_contact_enquiry_as_unresolved(enquiry_id)
+        if not success:
+            return jsonify({"error": "Contact enquiry not found"}), 404
+        return jsonify({"message": "Contact enquiry marked as unresolved"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@main.route("/contact/<enquiry_id>", methods=["DELETE"])
+def delete_contact_enquiry_route(enquiry_id):
+    try:
+        success = delete_contact_enquiry(enquiry_id)
+        if not success:
+            return jsonify({"error": "Contact enquiry not found"}), 404
+        return jsonify({"message": "Contact enquiry deleted successfully"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500

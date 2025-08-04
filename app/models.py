@@ -322,3 +322,76 @@ def delete_property_enquiry(enquiry_id):
     with get_db_cursor() as cursor:
         cursor.execute("DELETE FROM property_enquiry WHERE id = %s", (enquiry_id,))
         return cursor.rowcount > 0
+
+
+def create_contact_enquiry(enquiry_data):
+    with get_db_connection() as conn:
+        with conn.cursor(dictionary=True) as cursor:
+            enquiry_id = str(uuid.uuid4())
+            cursor.execute(
+                """INSERT INTO contact_enquiry 
+                (id, first_name, last_name, email, phone, enquiry_type, additional_info) 
+                VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+                (
+                    enquiry_id,
+                    enquiry_data["first_name"],
+                    enquiry_data["last_name"],
+                    enquiry_data["email"],
+                    enquiry_data["phone"],
+                    enquiry_data["enquiry_type"],
+                    enquiry_data.get("additional_info", ""),
+                ),
+            )
+            conn.commit()
+            return enquiry_id
+
+
+def get_all_contact_enquiries():
+    with get_db_cursor() as cursor:
+        cursor.execute(
+            """SELECT id, first_name, last_name, email, phone, enquiry_type, 
+                  additional_info, resolved, submitted_at 
+               FROM contact_enquiry 
+               ORDER BY submitted_at DESC"""
+        )
+        return cursor.fetchall()
+
+
+def get_contact_enquiry_by_id(enquiry_id):
+    with get_db_cursor() as cursor:
+        cursor.execute(
+            """SELECT id, first_name, last_name, email, phone, enquiry_type, 
+                  additional_info, resolved, submitted_at 
+               FROM contact_enquiry 
+               WHERE id = %s""",
+            (enquiry_id,),
+        )
+        return cursor.fetchone()
+
+
+def mark_contact_enquiry_as_resolved(enquiry_id):
+    with get_db_connection() as conn:
+        with conn.cursor(dictionary=True) as cursor:
+            cursor.execute(
+                "UPDATE contact_enquiry SET resolved = 'yes' WHERE id = %s",
+                (enquiry_id,),
+            )
+            conn.commit()
+            return cursor.rowcount > 0
+
+
+def mark_contact_enquiry_as_unresolved(enquiry_id):
+    with get_db_connection() as conn:
+        with conn.cursor(dictionary=True) as cursor:
+            cursor.execute(
+                "UPDATE contact_enquiry SET resolved = 'no' WHERE id = %s",
+                (enquiry_id,),
+            )
+            conn.commit()
+            return cursor.rowcount > 0
+
+
+def delete_contact_enquiry(enquiry_id):
+    with get_db_cursor() as cursor:
+        cursor.execute("DELETE FROM contact_enquiry WHERE id = %s", (enquiry_id,))
+        return cursor.rowcount > 0
