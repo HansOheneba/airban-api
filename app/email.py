@@ -264,3 +264,347 @@ def send_order_confirmation(order_data):
     except Exception as e:
         current_app.logger.error(f"Error sending order emails: {str(e)}")
         return False
+
+
+def send_property_enquiry_emails(enquiry_data):
+    """
+    Send property enquiry confirmation email to customer and notification to admin
+    """
+    try:
+        # Set the API key
+        resend.api_key = current_app.config["RESEND_API_KEY"]
+
+        # Get sender and admin email from config
+        verified_domain = current_app.config["RESEND_VERIFIED_DOMAIN"]
+        admin_email = current_app.config["ADMIN_EMAIL"]
+
+        customer_email = enquiry_data["email"]
+        customer_name = f"{enquiry_data['first_name']} {enquiry_data['last_name']}"
+
+        # Send to customer
+        customer_params = {
+            "from": f"Airban Homes <{verified_domain}>",
+            "to": [customer_email],
+            "subject": "Your Property Enquiry - Airban Homes",
+            "html": f"""
+            <html>
+            <body style="margin: 0; width: 100%; padding: 0; -webkit-font-smoothing: antialiased; word-break: break-word">
+              <div role="article" aria-roledescription="email" aria-label lang="en">
+                <div class="sm-px-1" style="background-color: #f3f4f6; font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 14px">
+                  <table align="center" style="margin: 0 auto" cellpadding="0" cellspacing="0" role="none">
+                    <tr>
+                      <td style="width: 552px; max-width: 100%">
+                        <div role="separator" style="line-height: 24px">&zwj;</div>
+                        <table style="width: 100%" cellpadding="0" cellspacing="0" role="none">
+                          <tr>
+                            <td class="sm-p-1" style="border-radius: 8px; border-width: 1px; border-color: #e5e7eb; background-color: #fffffe; padding: 24px 10px">
+                              <div style="margin-bottom: 24px; display: flex; justify-content: center; border-radius: 8px; background-color: #1e3a8a; padding: 16px">
+                                <img src="https://res.cloudinary.com/xenodinger/image/upload/v1753977796/airbanWhiteLogo_vau4y8.png" width="180" alt="Airban Homes Logo" style="max-width: 100%; vertical-align: middle; display: block; margin: 0 auto;">
+                              </div>
+                              <h1 style="margin-bottom: 8px; font-size: 18px; font-weight: 600; color: #111827">Thank You {customer_name}!</h1>
+                              <p style="margin-bottom: 24px; color: #4b5563">
+                                We have received your property enquiry and our team will get back to you within 24 hours. 
+                                Below are the details of your enquiry for your records.
+                              </p>
+                              
+                              <!-- Enquiry Details -->
+                              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px; border-radius: 8px; background-color: #1e3a8a; padding: 20px; color: #ffffff;">
+                                <tr>
+                                  <td>
+                                    <h2 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 700; color: #ffffff;">Enquiry Details</h2>
+                                    <table width="100%" cellpadding="6" cellspacing="0" style="font-size: 12px; color: #ffffff;">
+                                      <tr>
+                                        <td style="color: #ffffff;">Name</td>
+                                        <td style="text-align: right; font-weight: 600; color: #ffffff;">{customer_name}</td>
+                                      </tr>
+                                      <tr>
+                                        <td style="color: #ffffff;">Email</td>
+                                        <td style="text-align: right; font-weight: 600; color: #ffffff;">{customer_email}</td>
+                                      </tr>
+                                      <tr>
+                                        <td style="color: #ffffff;">Phone</td>
+                                        <td style="text-align: right; font-weight: 600; color: #ffffff;">{enquiry_data['phone']}</td>
+                                      </tr>
+                                      <tr>
+                                        <td style="color: #ffffff;">Property of Interest</td>
+                                        <td style="text-align: right; font-weight: 600; color: #ffffff;">{enquiry_data['selected_property']}</td>
+                                      </tr>
+                                      <tr>
+                                        <td style="color: #ffffff;">Enquiry ID</td>
+                                        <td style="text-align: right; font-weight: 600; color: #ffffff;">{enquiry_data['id']}</td>
+                                      </tr>
+                                    </table>
+                                  </td>
+                                </tr>
+                              </table>
+
+                              {f'<div style="margin-bottom: 24px; padding: 16px; background-color: #f9fafb; border-radius: 8px;"><h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #111827;">Your Message:</h3><p style="margin: 0; color: #4b5563; font-size: 13px;">{enquiry_data.get("message", "No additional message provided")}</p></div>' if enquiry_data.get("message") else ""}
+
+                              <p style="margin-bottom: 4px; text-align: center; font-size: 12px; color: #6b7280">
+                                Questions? Contact us at
+                                <a href="mailto:sales@myairbanhomes.com" style="text-decoration: underline">sales@myairbanhomes.com</a>
+                              </p>
+                              <p style="text-align: center; font-size: 12px; color: #9ca3af">
+                                © 2025 Airban Homes. All rights reserved.
+                              </p>
+                            </td>
+                          </tr>
+                        </table>
+                        <div role="separator" style="line-height: 24px">&zwj;</div>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+            </body>
+            </html>
+            """,
+        }
+
+        # Send to admin
+        admin_params = {
+            "from": f"Airban Property Enquiries <{verified_domain}>",
+            "to": [admin_email],
+            "subject": f"New Property Enquiry from {customer_name}",
+            "html": f"""
+            <html>
+            <body style="margin: 0; width: 100%; padding: 0; -webkit-font-smoothing: antialiased; word-break: break-word">
+              <div role="article" aria-roledescription="email" aria-label lang="en">
+                <div style="background-color: #f3f4f6; font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 14px">
+                  <table align="center" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+                    <tr>
+                      <td style="width: 552px; max-width: 100%;">
+                        <div style="line-height: 24px">&zwj;</div>
+                        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fffffe; border-radius: 8px; border: 1px solid #e5e7eb; padding: 24px 10px;">
+                          <tr>
+                            <td>
+                              <div style="margin-bottom: 24px; display: flex; justify-content: center; border-radius: 8px; background-color: #1e3a8a; padding: 16px;">
+                                <img src="https://res.cloudinary.com/xenodinger/image/upload/v1753977796/airbanWhiteLogo_vau4y8.png" width="180" alt="Airban Homes Logo" style="max-width: 100%; display: block; margin: 0 auto;">
+                              </div>
+
+                              <h1 style="margin-bottom: 8px; font-size: 18px; font-weight: 600; color: #111827;">New Property Enquiry</h1>
+                              <p style="margin-bottom: 24px; color: #4b5563;">
+                                A new property enquiry has been submitted by <strong>{customer_name}</strong>. Please follow up within 24 hours.
+                              </p>
+
+                              <table width="100%" cellpadding="6" cellspacing="0" style="font-size: 13px; color: #111827; margin-bottom: 24px;">
+                                <tr>
+                                  <td style="font-weight: 600;">Customer Name:</td>
+                                  <td style="text-align: right;">{customer_name}</td>
+                                </tr>
+                                <tr>
+                                  <td style="font-weight: 600;">Email:</td>
+                                  <td style="text-align: right;">{customer_email}</td>
+                                </tr>
+                                <tr>
+                                  <td style="font-weight: 600;">Phone:</td>
+                                  <td style="text-align: right;">{enquiry_data['phone']}</td>
+                                </tr>
+                                <tr>
+                                  <td style="font-weight: 600;">Property of Interest:</td>
+                                  <td style="text-align: right;">{enquiry_data['selected_property']}</td>
+                                </tr>
+                                <tr>
+                                  <td style="font-weight: 600;">Enquiry ID:</td>
+                                  <td style="text-align: right;">{enquiry_data['id']}</td>
+                                </tr>
+                              </table>
+
+                              {f'<div style="margin-bottom: 24px; padding: 16px; background-color: #f9fafb; border-radius: 8px;"><h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #111827;">Customer Message:</h3><p style="margin: 0; color: #4b5563; font-size: 13px;">{enquiry_data.get("message", "No additional message provided")}</p></div>' if enquiry_data.get("message") else ""}
+
+                              <p style="text-align: center; font-size: 12px; color: #9ca3af;">
+                                © 2025 Airban Homes. Internal notification only.
+                              </p>
+                            </td>
+                          </tr>
+                        </table>
+                        <div style="line-height: 24px">&zwj;</div>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+            </body>
+            </html>
+            """,
+        }
+
+        resend.Emails.send(customer_params)
+        resend.Emails.send(admin_params)
+
+        return True
+    except Exception as e:
+        current_app.logger.error(f"Error sending property enquiry emails: {str(e)}")
+        return False
+
+
+def send_contact_enquiry_emails(enquiry_data):
+    """
+    Send contact enquiry confirmation email to customer and notification to admin
+    """
+    try:
+        # Set the API key
+        resend.api_key = current_app.config["RESEND_API_KEY"]
+
+        # Get sender and admin email from config
+        verified_domain = current_app.config["RESEND_VERIFIED_DOMAIN"]
+        admin_email = current_app.config["ADMIN_EMAIL"]
+
+        customer_email = enquiry_data["email"]
+        customer_name = f"{enquiry_data['first_name']} {enquiry_data['last_name']}"
+
+        # Send to customer
+        customer_params = {
+            "from": f"Airban Homes <{verified_domain}>",
+            "to": [customer_email],
+            "subject": "Your Contact Enquiry - Airban Homes",
+            "html": f"""
+            <html>
+            <body style="margin: 0; width: 100%; padding: 0; -webkit-font-smoothing: antialiased; word-break: break-word">
+              <div role="article" aria-roledescription="email" aria-label lang="en">
+                <div class="sm-px-1" style="background-color: #f3f4f6; font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 14px">
+                  <table align="center" style="margin: 0 auto" cellpadding="0" cellspacing="0" role="none">
+                    <tr>
+                      <td style="width: 552px; max-width: 100%">
+                        <div role="separator" style="line-height: 24px">&zwj;</div>
+                        <table style="width: 100%" cellpadding="0" cellspacing="0" role="none">
+                          <tr>
+                            <td class="sm-p-1" style="border-radius: 8px; border-width: 1px; border-color: #e5e7eb; background-color: #fffffe; padding: 24px 10px">
+                              <div style="margin-bottom: 24px; display: flex; justify-content: center; border-radius: 8px; background-color: #1e3a8a; padding: 16px">
+                                <img src="https://res.cloudinary.com/xenodinger/image/upload/v1753977796/airbanWhiteLogo_vau4y8.png" width="180" alt="Airban Homes Logo" style="max-width: 100%; vertical-align: middle; display: block; margin: 0 auto;">
+                              </div>
+                              <h1 style="margin-bottom: 8px; font-size: 18px; font-weight: 600; color: #111827">Thank You {customer_name}!</h1>
+                              <p style="margin-bottom: 24px; color: #4b5563">
+                                We have received your contact enquiry and our team will get back to you within 24 hours. 
+                                Below are the details of your enquiry for your records.
+                              </p>
+                              
+                              <!-- Enquiry Details -->
+                              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px; border-radius: 8px; background-color: #1e3a8a; padding: 20px; color: #ffffff;">
+                                <tr>
+                                  <td>
+                                    <h2 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 700; color: #ffffff;">Enquiry Details</h2>
+                                    <table width="100%" cellpadding="6" cellspacing="0" style="font-size: 12px; color: #ffffff;">
+                                      <tr>
+                                        <td style="color: #ffffff;">Name</td>
+                                        <td style="text-align: right; font-weight: 600; color: #ffffff;">{customer_name}</td>
+                                      </tr>
+                                      <tr>
+                                        <td style="color: #ffffff;">Email</td>
+                                        <td style="text-align: right; font-weight: 600; color: #ffffff;">{customer_email}</td>
+                                      </tr>
+                                      <tr>
+                                        <td style="color: #ffffff;">Phone</td>
+                                        <td style="text-align: right; font-weight: 600; color: #ffffff;">{enquiry_data['phone']}</td>
+                                      </tr>
+                                      <tr>
+                                        <td style="color: #ffffff;">Enquiry Type</td>
+                                        <td style="text-align: right; font-weight: 600; color: #ffffff;">{enquiry_data['enquiry_type']}</td>
+                                      </tr>
+                                      <tr>
+                                        <td style="color: #ffffff;">Enquiry ID</td>
+                                        <td style="text-align: right; font-weight: 600; color: #ffffff;">{enquiry_data['id']}</td>
+                                      </tr>
+                                    </table>
+                                  </td>
+                                </tr>
+                              </table>
+
+                              {f'<div style="margin-bottom: 24px; padding: 16px; background-color: #f9fafb; border-radius: 8px;"><h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #111827;">Additional Information:</h3><p style="margin: 0; color: #4b5563; font-size: 13px;">{enquiry_data.get("additional_info", "No additional information provided")}</p></div>' if enquiry_data.get("additional_info") else ""}
+
+                              <p style="margin-bottom: 4px; text-align: center; font-size: 12px; color: #6b7280">
+                                Questions? Contact us at
+                                <a href="mailto:sales@myairbanhomes.com" style="text-decoration: underline">sales@myairbanhomes.com</a>
+                              </p>
+                              <p style="text-align: center; font-size: 12px; color: #9ca3af">
+                                © 2025 Airban Homes. All rights reserved.
+                              </p>
+                            </td>
+                          </tr>
+                        </table>
+                        <div role="separator" style="line-height: 24px">&zwj;</div>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+            </body>
+            </html>
+            """,
+        }
+
+        # Send to admin
+        admin_params = {
+            "from": f"Airban Contact Enquiries <{verified_domain}>",
+            "to": [admin_email],
+            "subject": f"New Contact Enquiry from {customer_name} - {enquiry_data['enquiry_type']}",
+            "html": f"""
+            <html>
+            <body style="margin: 0; width: 100%; padding: 0; -webkit-font-smoothing: antialiased; word-break: break-word">
+              <div role="article" aria-roledescription="email" aria-label lang="en">
+                <div style="background-color: #f3f4f6; font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 14px">
+                  <table align="center" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+                    <tr>
+                      <td style="width: 552px; max-width: 100%;">
+                        <div style="line-height: 24px">&zwj;</div>
+                        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fffffe; border-radius: 8px; border: 1px solid #e5e7eb; padding: 24px 10px;">
+                          <tr>
+                            <td>
+                              <div style="margin-bottom: 24px; display: flex; justify-content: center; border-radius: 8px; background-color: #1e3a8a; padding: 16px;">
+                                <img src="https://res.cloudinary.com/xenodinger/image/upload/v1753977796/airbanWhiteLogo_vau4y8.png" width="180" alt="Airban Homes Logo" style="max-width: 100%; display: block; margin: 0 auto;">
+                              </div>
+
+                              <h1 style="margin-bottom: 8px; font-size: 18px; font-weight: 600; color: #111827;">New Contact Enquiry</h1>
+                              <p style="margin-bottom: 24px; color: #4b5563;">
+                                A new contact enquiry has been submitted by <strong>{customer_name}</strong>. Please follow up within 24 hours.
+                              </p>
+
+                              <table width="100%" cellpadding="6" cellspacing="0" style="font-size: 13px; color: #111827; margin-bottom: 24px;">
+                                <tr>
+                                  <td style="font-weight: 600;">Customer Name:</td>
+                                  <td style="text-align: right;">{customer_name}</td>
+                                </tr>
+                                <tr>
+                                  <td style="font-weight: 600;">Email:</td>
+                                  <td style="text-align: right;">{customer_email}</td>
+                                </tr>
+                                <tr>
+                                  <td style="font-weight: 600;">Phone:</td>
+                                  <td style="text-align: right;">{enquiry_data['phone']}</td>
+                                </tr>
+                                <tr>
+                                  <td style="font-weight: 600;">Enquiry Type:</td>
+                                  <td style="text-align: right;">{enquiry_data['enquiry_type']}</td>
+                                </tr>
+                                <tr>
+                                  <td style="font-weight: 600;">Enquiry ID:</td>
+                                  <td style="text-align: right;">{enquiry_data['id']}</td>
+                                </tr>
+                              </table>
+
+                              {f'<div style="margin-bottom: 24px; padding: 16px; background-color: #f9fafb; border-radius: 8px;"><h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #111827;">Additional Information:</h3><p style="margin: 0; color: #4b5563; font-size: 13px;">{enquiry_data.get("additional_info", "No additional information provided")}</p></div>' if enquiry_data.get("additional_info") else ""}
+
+                              <p style="text-align: center; font-size: 12px; color: #9ca3af;">
+                                © 2025 Airban Homes. Internal notification only.
+                              </p>
+                            </td>
+                          </tr>
+                        </table>
+                        <div style="line-height: 24px">&zwj;</div>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+            </body>
+            </html>
+            """,
+        }
+
+        resend.Emails.send(customer_params)
+        resend.Emails.send(admin_params)
+
+        return True
+    except Exception as e:
+        current_app.logger.error(f"Error sending contact enquiry emails: {str(e)}")
+        return False

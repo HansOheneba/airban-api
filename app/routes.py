@@ -25,7 +25,11 @@ from .models import (
     delete_contact_enquiry,
 )
 
-from .email import send_order_confirmation
+from .email import (
+    send_order_confirmation,
+    send_property_enquiry_emails,
+    send_contact_enquiry_emails,
+)
 import uuid
 
 import resend
@@ -340,6 +344,12 @@ def create_property_enquiry_route():
                 return jsonify({"error": f"Missing required field: {field}"}), 400
 
         enquiry_id = create_property_enquiry(data)
+
+        # Get the full enquiry data to send email
+        enquiry = get_property_enquiry_by_id(enquiry_id)
+        if enquiry:
+            send_property_enquiry_emails(enquiry)
+
         return (
             jsonify(
                 {
@@ -424,8 +434,13 @@ def create_contact_enquiry_route():
                 400,
             )
 
-
         enquiry_id = create_contact_enquiry(data)
+
+        # Get the full enquiry data to send email
+        enquiry = get_contact_enquiry_by_id(enquiry_id)
+        if enquiry:
+            send_contact_enquiry_emails(enquiry)
+
         return (
             jsonify(
                 {
