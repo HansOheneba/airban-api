@@ -1,6 +1,7 @@
 import os
 import resend
 from flask import current_app
+from datetime import datetime
 
 
 def send_order_confirmation(order_data):
@@ -632,7 +633,7 @@ def send_newsletter_welcome_email(subscriber_data):
                     <div style="margin-bottom: 24px; display: flex; justify-content: center; border-radius: 8px; background-color: #1e3a8a; padding: 16px">
                       <img src="https://res.cloudinary.com/xenodinger/image/upload/v1753977796/airbanWhiteLogo_vau4y8.png" width="180" alt="Airban Homes Logo" style="max-width: 100%; vertical-align: middle; display: block; margin: 0 auto;">
                     </div>
-                    <h1 style="margin-bottom: 8px; font-size: 18px; font-weight: 600; color: #111827">Welcome to Our Newsletter!</h1>
+                    <h1 style="margin-bottom: 8px; font-size: 18px; font-weight: 600; color: #111827">Welcome to The Family</h1>
                     <p style="margin-bottom: 24px; color: #4b5563">
                       Thank you for expressing interest in Airban Homes! 🎉<br>
                       We're excited to have you in our community.
@@ -682,6 +683,10 @@ def send_newsletter_welcome_email(subscriber_data):
         }
 
         resend.Emails.send(subscriber_params)
+
+        # Also send admin notification
+        send_admin_new_subscriber_notification(subscriber_data)
+
         return True
     except Exception as e:
         current_app.logger.error(f"Error sending newsletter welcome email: {str(e)}")
@@ -761,4 +766,107 @@ def send_newsletter_update(newsletter_data):
         return True
     except Exception as e:
         current_app.logger.error(f"Error sending newsletter update: {str(e)}")
+        return False
+
+
+def send_admin_new_subscriber_notification(subscriber_data):
+    """
+    Send admin notification email when a new subscriber joins the newsletter
+    """
+    try:
+        # Set the API key
+        resend.api_key = current_app.config["RESEND_API_KEY"]
+
+        # Get sender and admin email from config
+        verified_domain = current_app.config["RESEND_VERIFIED_DOMAIN"]
+        admin_email = current_app.config["ADMIN_EMAIL"]
+
+        subscriber_email = subscriber_data["email"]
+        subscription_time = datetime.now().strftime("%B %d, %Y at %I:%M %p")
+
+        # Send notification to admin
+        admin_params = {
+            "from": f"Airban Newsletter <{verified_domain}>",
+            "to": [admin_email],
+            "subject": f"New Newsletter Subscriber: {subscriber_email}",
+            "html": f"""
+            <html>
+            <body style="margin: 0; width: 100%; padding: 0; -webkit-font-smoothing: antialiased; word-break: break-word">
+              <div role="article" aria-roledescription="email" aria-label lang="en">
+                <div style="background-color: #f3f4f6; font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 14px">
+                  <table align="center" cellpadding="0" cellspacing="0" style="margin: 0 auto;">
+                    <tr>
+                      <td style="width: 552px; max-width: 100%;">
+                        <div style="line-height: 24px">&zwj;</div>
+                        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fffffe; border-radius: 8px; border: 1px solid #e5e7eb; padding: 24px 10px;">
+                          <tr>
+                            <td>
+                              <!-- Logo -->
+                              <div style="margin-bottom: 24px; display: flex; justify-content: center; border-radius: 8px; background-color: #1e3a8a; padding: 16px;">
+                                <img src="https://res.cloudinary.com/xenodinger/image/upload/v1753977796/airbanWhiteLogo_vau4y8.png" width="180" alt="Airban Homes Logo" style="max-width: 100%; display: block; margin: 0 auto;">
+                              </div>
+
+                              <!-- Admin Header -->
+                              <h1 style="margin-bottom: 8px; font-size: 18px; font-weight: 600; color: #111827;">New Newsletter Subscriber! 🎉</h1>
+                              <p style="margin-bottom: 24px; color: #4b5563;">
+                                Someone new has joined the Airban Homes community. Here are the details:
+                              </p>
+
+                              <!-- Subscriber Details -->
+                              <div style="margin-bottom: 24px; padding: 20px; background-color: #1e3a8a; border-radius: 8px; color: #ffffff;">
+                                <h2 style="margin: 0 0 16px 0; font-size: 16px; font-weight: 700; color: #ffffff;">Subscriber Information</h2>
+                                <table width="100%" cellpadding="6" cellspacing="0" style="font-size: 13px; color: #ffffff;">
+                                  <tr>
+                                    <td style="color: #ffffff; font-weight: 600;">Email Address:</td>
+                                    <td style="text-align: right; color: #ffffff;">{subscriber_email}</td>
+                                  </tr>
+                                  <tr>
+                                    <td style="color: #ffffff; font-weight: 600;">Subscription Date:</td>
+                                    <td style="text-align: right; color: #ffffff;">{subscription_time}</td>
+                                  </tr>
+                                  <tr>
+                                    <td style="color: #ffffff; font-weight: 600;">Subscriber ID:</td>
+                                    <td style="text-align: right; color: #ffffff;">{subscriber_data.get('id', 'N/A')}</td>
+                                  </tr>
+                                </table>
+                              </div>
+
+                              <!-- Stats or Action Items -->
+                              <div style="margin-bottom: 24px; padding: 16px; background-color: #f9fafb; border-radius: 8px;">
+                                <h3 style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #111827;">📈 Growing Community</h3>
+                                <p style="margin: 0; color: #4b5563; font-size: 13px;">
+                                  Your newsletter community continues to grow! Consider reaching out to engage with your new subscriber or adding them to any specific campaigns you're running.
+                                </p>
+                              </div>
+
+                              <!-- Action Buttons -->
+                              <div style="margin-bottom: 24px; text-align: center;">
+                                <a href="mailto:{subscriber_email}" style="display: inline-block; margin-right: 12px; padding: 10px 20px; background-color: #1e3a8a; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 13px;">Contact Subscriber</a>
+                                <a href="https://airban-homes.vercel.app/admin/subscribers" style="display: inline-block; padding: 10px 20px; background-color: #6b7280; color: white; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 13px;">View All Subscribers</a>
+                              </div>
+
+                              <!-- Footer -->
+                              <p style="text-align: center; font-size: 12px; color: #9ca3af; margin: 0;">
+                                © 2025 Airban Homes. Internal notification only.
+                              </p>
+                            </td>
+                          </tr>
+                        </table>
+                        <div style="line-height: 24px">&zwj;</div>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+            </body>
+            </html>
+            """,
+        }
+
+        resend.Emails.send(admin_params)
+        return True
+    except Exception as e:
+        current_app.logger.error(
+            f"Error sending admin new subscriber notification: {str(e)}"
+        )
         return False

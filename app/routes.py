@@ -524,7 +524,7 @@ def subscribe_newsletter():
 
         subscriber_id = add_newsletter_subscriber(email)
         if subscriber_id:
-            send_newsletter_welcome_email({"email": email})
+            send_newsletter_welcome_email({"email": email, "id": subscriber_id})
             return (
                 jsonify({"message": "Subscribed successfully", "id": subscriber_id}),
                 201,
