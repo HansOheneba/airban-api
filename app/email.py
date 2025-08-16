@@ -598,3 +598,167 @@ def send_contact_enquiry_emails(enquiry_data):
     except Exception as e:
         current_app.logger.error(f"Error sending contact enquiry emails: {str(e)}")
         return False
+
+
+def send_newsletter_welcome_email(subscriber_data):
+    """
+    Send welcome email to new newsletter subscribers
+    """
+    try:
+        # Set the API key
+        resend.api_key = current_app.config["RESEND_API_KEY"]
+
+        # Get sender email from config
+        verified_domain = current_app.config["RESEND_VERIFIED_DOMAIN"]
+
+        subscriber_email = subscriber_data["email"]
+
+        subscriber_params = {
+            "from": f"Airban Homes <info@myairbanhomes.com>",
+            "to": [subscriber_email],
+            "subject": "Welcome to Airban Homes Community",
+            "html": f"""
+            <html>
+  <body style="margin: 0; width: 100%; padding: 0; -webkit-font-smoothing: antialiased; word-break: break-word">
+    <div role="article" aria-roledescription="email" aria-label lang="en">
+      <div class="sm-px-1" style="background-color: #f3f4f6; font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 14px">
+        <table align="center" style="margin: 0 auto" cellpadding="0" cellspacing="0" role="none">
+          <tr>
+            <td style="width: 552px; max-width: 100%">
+              <div role="separator" style="line-height: 24px">&zwj;</div>
+              <table style="width: 100%" cellpadding="0" cellspacing="0" role="none">
+                <tr>
+                  <td class="sm-p-1" style="border-radius: 8px; border-width: 1px; border-color: #e5e7eb; background-color: #fffffe; padding: 24px 10px">
+                    <div style="margin-bottom: 24px; display: flex; justify-content: center; border-radius: 8px; background-color: #1e3a8a; padding: 16px">
+                      <img src="https://res.cloudinary.com/xenodinger/image/upload/v1753977796/airbanWhiteLogo_vau4y8.png" width="180" alt="Airban Homes Logo" style="max-width: 100%; vertical-align: middle; display: block; margin: 0 auto;">
+                    </div>
+                    <h1 style="margin-bottom: 8px; font-size: 18px; font-weight: 600; color: #111827">Welcome to Our Newsletter!</h1>
+                    <p style="margin-bottom: 24px; color: #4b5563">
+                      Thank you for expressing interest in Airban Homes! 🎉<br>
+                      We're excited to have you in our community.
+                    </p>
+                    
+                    <div style="margin-bottom: 24px; padding: 16px; background-color: #f9fafb; border-radius: 8px;">
+                      <h2 style="margin: 0 0 12px 0; font-size: 16px; font-weight: 600; color: #111827;">You'll be among the first to hear about:</h2>
+                      <ul style="margin: 0; padding-left: 20px; color: #4b5563;">
+                        <li style="margin-bottom: 8px;">Opportunities to work and collaborate with us</li>
+                        <li style="margin-bottom: 8px;">Updates on our latest projects and initiatives</li>
+                        <li style="margin-bottom: 8px;">Exclusive insights into what's happening at Airban Homes</li>
+                        <li style="margin-bottom: 8px;">Special promotions and early access to new services</li>
+                      </ul>
+                    </div>
+
+                    <p style="margin-bottom: 24px; color: #4b5563">
+                      We respect your inbox — expect only relevant updates from us.
+                    </p>
+
+                    <p style="margin-bottom: 24px; color: #4b5563">
+                      In the meantime, feel free to visit our website or follow us on social media to stay connected.
+                    </p>
+
+                    <div style="margin-bottom: 24px; text-align: center;">
+                      <a href="https://myairbanhomes.com" style="display: inline-block; padding: 12px 24px; background-color: #1e3a8a; color: white; text-decoration: none; border-radius: 6px; font-weight: 600;">Visit Our Website</a>
+                    </div>
+
+                    <p style="margin-bottom: 4px; text-align: center; font-size: 12px; color: #6b7280">
+                      Questions? Contact us at
+                      <a href="mailto:info@myairbanhomes.com" style="text-decoration: underline">info@myairbanhomes.com</a>
+                    </p>
+                    <p style="text-align: center; font-size: 12px; color: #9ca3af">
+                      © 2025 Airban Homes. All rights reserved.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              <div role="separator" style="line-height: 24px">&zwj;</div>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </body>
+</html>
+            """,
+        }
+
+        resend.Emails.send(subscriber_params)
+        return True
+    except Exception as e:
+        current_app.logger.error(f"Error sending newsletter welcome email: {str(e)}")
+        return False
+
+
+def send_newsletter_update(newsletter_data):
+    """
+    Send newsletter updates to subscribers
+    """
+    try:
+        # Set the API key
+        resend.api_key = current_app.config["RESEND_API_KEY"]
+
+        # Get sender email from config
+        verified_domain = current_app.config["RESEND_VERIFIED_DOMAIN"]
+
+        subject = newsletter_data.get("subject", "Updates from Airban Homes")
+        content = newsletter_data.get("content", "")
+        recipient_emails = newsletter_data.get("recipients", [])
+
+        if not recipient_emails:
+            current_app.logger.error("No recipients provided for newsletter")
+            return False
+
+        # Send to all subscribers
+        newsletter_params = {
+            "from": f"Airban Homes <{verified_domain}>",
+            "to": recipient_emails,
+            "subject": subject,
+            "html": f"""
+            <html>
+  <body style="margin: 0; width: 100%; padding: 0; -webkit-font-smoothing: antialiased; word-break: break-word">
+    <div role="article" aria-roledescription="email" aria-label lang="en">
+      <div class="sm-px-1" style="background-color: #f3f4f6; font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif; font-size: 14px">
+        <table align="center" style="margin: 0 auto" cellpadding="0" cellspacing="0" role="none">
+          <tr>
+            <td style="width: 552px; max-width: 100%">
+              <div role="separator" style="line-height: 24px">&zwj;</div>
+              <table style="width: 100%" cellpadding="0" cellspacing="0" role="none">
+                <tr>
+                  <td class="sm-p-1" style="border-radius: 8px; border-width: 1px; border-color: #e5e7eb; background-color: #fffffe; padding: 24px 10px">
+                    <div style="margin-bottom: 24px; display: flex; justify-content: center; border-radius: 8px; background-color: #1e3a8a; padding: 16px">
+                      <img src="https://res.cloudinary.com/xenodinger/image/upload/v1753977796/airbanWhiteLogo_vau4y8.png" width="180" alt="Airban Homes Logo" style="max-width: 100%; vertical-align: middle; display: block; margin: 0 auto;">
+                    </div>
+                    
+                    <div style="margin-bottom: 24px; color: #4b5563; line-height: 1.6;">
+                      {content}
+                    </div>
+
+                    <div style="margin-bottom: 24px; text-align: center;">
+                      <a href="https://myairbanhomes.com" style="display: inline-block; padding: 12px 24px; background-color: #1e3a8a; color: white; text-decoration: none; border-radius: 6px; font-weight: 600;">Visit Our Website</a>
+                    </div>
+
+                    <p style="margin-bottom: 4px; text-align: center; font-size: 12px; color: #6b7280">
+                      Questions? Contact us at
+                      <a href="mailto:sales@myairbanhomes.com" style="text-decoration: underline">sales@myairbanhomes.com</a>
+                    </p>
+                    <p style="text-align: center; font-size: 12px; color: #9ca3af">
+                      © 2025 Airban Homes. All rights reserved.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+              <div role="separator" style="line-height: 24px">&zwj;</div>
+            </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </body>
+</html>
+            """,
+        }
+
+        resend.Emails.send(newsletter_params)
+        return True
+    except Exception as e:
+        current_app.logger.error(f"Error sending newsletter update: {str(e)}")
+        return False

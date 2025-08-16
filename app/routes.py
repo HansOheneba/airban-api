@@ -29,6 +29,7 @@ from .email import (
     send_order_confirmation,
     send_property_enquiry_emails,
     send_contact_enquiry_emails,
+    send_newsletter_welcome_email,
 )
 import uuid
 
@@ -504,5 +505,31 @@ def delete_contact_enquiry_route(enquiry_id):
         if not success:
             return jsonify({"error": "Contact enquiry not found"}), 404
         return jsonify({"message": "Contact enquiry deleted successfully"}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# Newsletter subscription route
+from .models import add_newsletter_subscriber
+
+
+@main.route("/subscribe", methods=["POST"])
+def subscribe_newsletter():
+    try:
+        data = request.get_json()
+        email = data.get("email")
+        if not email:
+            return jsonify({"error": "Email is required"}), 400
+
+        subscriber_id = add_newsletter_subscriber(email)
+        if subscriber_id:
+            send_newsletter_welcome_email({"email": email})
+            return (
+                jsonify({"message": "Subscribed successfully", "id": subscriber_id}),
+                201,
+            )
+        else:
+            return jsonify({"error": "Email already subscribed or invalid"}), 409
     except Exception as e:
         return jsonify({"error": str(e)}), 500

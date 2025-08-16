@@ -392,6 +392,28 @@ def mark_contact_enquiry_as_unresolved(enquiry_id):
 
 
 def delete_contact_enquiry(enquiry_id):
+
     with get_db_cursor() as cursor:
         cursor.execute("DELETE FROM contact_enquiry WHERE id = %s", (enquiry_id,))
         return cursor.rowcount > 0
+
+
+# Newsletter subscriber model function
+def add_newsletter_subscriber(email):
+    """
+    Adds a new subscriber to the newsletter.
+    Returns the subscriber id if successful, or None if email already exists.
+    """
+    with get_db_connection() as conn:
+        with conn.cursor(dictionary=True) as cursor:
+            subscriber_id = str(uuid.uuid4())
+            try:
+                cursor.execute(
+                    """INSERT INTO subscribers (id, email) VALUES (%s, %s)""",
+                    (subscriber_id, email),
+                )
+                conn.commit()
+                return subscriber_id
+            except Exception as e:
+                # Duplicate email or other error
+                return None
